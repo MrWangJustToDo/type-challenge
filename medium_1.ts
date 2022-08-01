@@ -90,6 +90,14 @@ type Test = TupleToUnion<Arr>; // expected to be '1' | '2' | '3'
 
 // 6. Chainable Options
 
+type Chainable_1<Options extends object = {}> = {
+  option<K extends string, V>(
+    key: K extends keyof Options ? never : K,
+    value: V
+  ): Chainable_1<Options & { [S in K]: V }>;
+  get(): { [K in keyof Options]: Options[K] };
+};
+
 interface Chainable<T = unknown> {
   option<P extends string = string, Q = unknown>(
     key: P extends keyof T ? never : P,
@@ -121,3 +129,98 @@ interface Result {
     value: string;
   };
 }
+
+// 7 Last of Array
+
+type Last<T extends unknown[]> = T extends []
+  ? never
+  : T extends [infer Q]
+  ? Q
+  : T extends [...infer P, infer Q]
+  ? Q
+  : never;
+
+type arr1 = ["a", "b", "c"];
+type arr2 = [3, 2, 1];
+
+type tail1 = Last<arr1>; // expected to be 'c'
+type tail2 = Last<arr2>; // expected to be 1
+
+// 8 Pop
+
+type Pop<T extends unknown[]> = T extends []
+  ? []
+  : T extends [...infer Q, infer P]
+  ? Q
+  : never;
+
+type Shift<T extends unknown[]> = T extends []
+  ? []
+  : T extends [infer Q, ...infer P]
+  ? P
+  : never;
+
+type Push<T extends unknown[], K> = [...T, K];
+
+type Unshift<T extends unknown[], K> = [K, ...T];
+
+type re1 = Pop<arr1>; // expected to be ['a', 'b']
+type re2 = Pop<arr2>; // expected to be [3, 2]
+
+// 9 Promise.all
+
+type PromiseResult<T extends unknown> = T extends Promise<infer P>
+  ? P extends Promise<unknown>
+    ? PromiseResult<P>
+    : P
+  : T;
+
+type PromiseAll_1<T extends readonly unknown[]> = Promise<{
+  [K in keyof T]: PromiseResult<T[K]>;
+}>;
+
+const promise1 = Promise.resolve(3);
+const promise2 = 42;
+const promise3 = new Promise<string>((resolve, reject) => {
+  setTimeout(resolve, 100, "foo");
+});
+
+function PromiseAll<T extends readonly unknown[]>(
+  PromiseArray: T
+): PromiseAll_1<T> {
+  return Promise.all(PromiseArray) as PromiseAll_1<T>;
+}
+
+type f = PromiseAll_1<[typeof promise1, typeof promise2, typeof promise3]>;
+
+// expected to be `Promise<[number, 42, string]>`
+const p = PromiseAll([promise1, promise2, promise3] as const);
+
+// 10 Type Lookup
+
+interface Cat {
+  type: "cat";
+  breeds: "Abyssinian" | "Shorthair" | "Curl" | "Bengal";
+}
+
+interface Dog {
+  type: "dog";
+  breeds: "Hound" | "Brittany" | "Bulldog" | "Boxer";
+  color: "brown" | "white" | "black";
+}
+
+type LookUp<T extends { type: string }, K extends string> = T extends {
+  type: infer Q;
+}
+  ? Q extends K
+    ? T
+    : never
+  : never;
+
+type MyDogType = LookUp<Cat | Dog, "dog">; // expected to be `Dog`
+
+// 11 Trim Left
+
+type TrimLeft<T extends string> = T extends ` ${infer R}` ? TrimLeft<R> : T;
+
+type trimed = TrimLeft<"  Hello World  ">; // expected to be 'Hello World  '
