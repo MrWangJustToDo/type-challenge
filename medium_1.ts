@@ -223,4 +223,78 @@ type MyDogType = LookUp<Cat | Dog, "dog">; // expected to be `Dog`
 
 type TrimLeft<T extends string> = T extends ` ${infer R}` ? TrimLeft<R> : T;
 
-type trimed = TrimLeft<"  Hello World  ">; // expected to be 'Hello World  '
+type trimmedLeft = TrimLeft<"  Hello World  ">; // expected to be 'Hello World  '
+
+// 12 Trim
+
+type Trim<T extends string> = T extends ` ${infer R}`
+  ? Trim<R>
+  : T extends `${infer Q} `
+  ? Trim<Q>
+  : T;
+
+type trimmed = Trim<"  Hello World  ">; // expected to be 'Hello World'
+
+// 13 Capitalize
+
+type MyCapitalize<T extends string> = T extends `${infer F}${infer Last}`
+  ? `${Uppercase<F>}${Last}`
+  : T;
+
+type capitalized = MyCapitalize<"hello world">;
+
+// 14 Replace
+
+type Replace<
+  S extends string,
+  From extends string,
+  To extends string
+> = From extends ""
+  ? S
+  : S extends `${infer St}${From}${infer End}`
+  ? `${St}${To}${End}`
+  : S;
+
+type replaced = Replace<"types are fun!", "fun", "awesome">;
+
+// 15 ReplaceAll
+
+type ReplaceAll<
+  S extends string,
+  From extends string,
+  To extends string
+> = From extends ""
+  ? S
+  : S extends `${infer F}${From}${infer L}`
+  ? `${F}${To}${ReplaceAll<L, From, To>}`
+  : S;
+
+type replacedAll = ReplaceAll<"t y p e s", " ", "">; // expected to be 'types'
+
+// 16 Append Argument
+
+type Fn = (a: number, b: string) => number;
+
+type AppendArgument<
+  Fn extends (...args: any[]) => unknown,
+  Args extends unknown
+> = Fn extends (...args: infer P) => infer R
+  ? (...args: [...P, Args]) => R
+  : Fn;
+
+type ResultAppend = AppendArgument<Fn, boolean>;
+// expected be (a: number, b: string, x: boolean) => number
+
+// 17 Permutation
+
+// TODO
+type Permutation<T extends string> = T;
+
+type perm = Permutation<"A" | "B" | "C">; // ['A', 'B', 'C'] | ['A', 'C', 'B'] | ['B', 'A', 'C'] | ['B', 'C', 'A'] | ['C', 'A', 'B'] | ['C', 'B', 'A']
+
+// 18 Length of string
+
+// TODO
+type Length<S extends string> = S extends "" ? 0 : S;
+
+type length = Length<'hello'>
